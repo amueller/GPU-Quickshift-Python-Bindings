@@ -44,12 +44,13 @@ CPU := x86_64
 PLATFORM := linux
 endif
 
-CFLAGS += -I. -I$(GPUROOT)/include -I$(GDKROOT)/C/common/inc -I$(GDKROOT)/shared/inc
+CFLAGS += -I. -I$(GPUROOT)/include -I$(GDKROOT)/C/common/inc -I$(GDKROOT)/shared/inc -Xcompiler -fPIC
 
 NVCC     = $(GPUROOT)/bin/nvcc
 GENCODE  = -gencode=arch=compute_10,code=\"sm_10,compute_10\"  -gencode=arch=compute_20,code=\"sm_20,compute_20\"
 LDFLAGS += -L$(GPULIB) -L$(GDKROOT)/C/lib -L$(GDKROOT)/C/common/lib/$(PLATFORM) -L$(GDKROOT)/shared/lib
 LDFLAGS += -lcudart -lcutil_$(CPU) -lshrutil_$(CPU)
+PYTHONFLAGS = -lboost_python-mt-py26 -shared
 
 all: quickshift
 
@@ -62,5 +63,7 @@ all: quickshift
 quickshift: Image.cpp.o quickshift_cpu.cpp.o main.cpp.o quickshift_gpu.cu.o
 	g++ -fPIC $(MACLD) -o quickshift $^ $(LDFLAGS)
 
+quickshift_python: quickshift_gpu.cu.o
+	g++ quickshift_python.cpp $^ -Wall $(CFLAGS) $(LDFLAGS) $(PYTHONFLAGS) -o quickshift_py.so
 clean:
 	rm -f quickshift *.o
