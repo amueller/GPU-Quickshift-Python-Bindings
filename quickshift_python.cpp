@@ -14,12 +14,19 @@
 using namespace boost::python;
 using namespace std;
 
-void image_from_data(image_t & im, float* image_data, int h, int w, int channels){
-    im.I = image_data;
-    im.N1 = h;
-    im.N2 = w;
+void image_from_data(image_t & im, unsigned char* image_data, int N1, int N2, int channels){
+    im.N1 = N1;
+    im.N2 = N2;
     im.K = channels;
-    
+
+    im.I = (float *) calloc(im.N1*im.N2*im.K, sizeof(float));
+    for(int k = 0; k < im.K; k++)
+        for(int col = 0; col < im.N2; col++)
+            for(int row = 0; row < im.N1; row++)
+            {
+                unsigned char * pt = image_data + im.K * (col + im.N2 *(im.N1-1-row));
+                im.I[row + col*im.N1 + k*im.N1*im.N2] = 32. * pt[k] / 255.; // Scale 0-32
+            }
 }
 
 int * map_to_flatmap(float * map, unsigned int size)
@@ -103,7 +110,7 @@ PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma
     //assert(image.nd == 2 || image.nd == 3);
     assert(image.nd == 3);
     cout << "Input needs to be scaled between 0 and 32!" <<std::endl;
-    if (PyArray_TYPE(&image) != PyArray_FLOAT){
+    if (PyArray_TYPE(&image) != PyArray_UBYTE){
        cout << "Only float arrays are supported"  <<std::endl;
        exit(1);
     }
@@ -128,8 +135,12 @@ PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma
     gaps         = (float *) calloc(dims[0]*dims[1], sizeof(float)) ;
     E            = (float *) calloc(dims[0]*dims[1], sizeof(float)) ;
 
+    unsigned char* blub = (unsigned char*)image.data;
+    std::cout << int(blub[0]) << " " << int(blub[1]) << " " << int(blub[2]) <<std::endl;
+    std::cout << int(blub[3* (30 + 20*dims[1])]) <<std::endl;
+
     image_t im;
-    image_from_data(im,(float*)image.data,image.dimensions[0],image.dimensions[1], image.dimensions[2]);
+    image_from_data(im,(unsigned char*)image.data,image.dimensions[0],image.dimensions[1], image.dimensions[2]);
     cout << im.I[0] << " " << im.I[1] << " " << im.I[2] <<endl;
 
     //[>********* Quick shift *********<]
