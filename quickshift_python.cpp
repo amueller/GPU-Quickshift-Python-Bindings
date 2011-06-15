@@ -97,17 +97,23 @@ image_t imseg(image_t im, int * flatmap)
   return imout;
 }
 
-PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma, int* device=NULL){
-    assert(image.nd == 2 || image.nd == 3);
-    int* dims=new int[3];
+//int quickshift_python_wrapper(PyArrayObject image, float tau, float sigma, int device){
+PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma, int device){
+
+    //assert(image.nd == 2 || image.nd == 3);
+    assert(image.nd == 3);
+    cout << "Input needs to be scaled between 0 and 32!" <<std::endl;
+    if (PyArray_TYPE(&image) != PyArray_FLOAT){
+       cout << "Only float arrays are supported"  <<std::endl;
+       exit(1);
+    }
+    
+    npy_intp* dims=new npy_intp[3];
     dims[2]=3;
     dims[1]=image.dimensions[1];
     dims[0]=image.dimensions[0];
 
-    if(device!=NULL)
-        cutilSafeCall(cudaSetDevice(*device));
-    else
-        cudaSetDevice(cutGetMaxGflopsDeviceId());
+    cutilSafeCall(cudaSetDevice(device));
 
     float *map, *E, *gaps;
     int * flatmap;
@@ -122,20 +128,14 @@ PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma
     gaps         = (float *) calloc(dims[0]*dims[1], sizeof(float)) ;
     E            = (float *) calloc(dims[0]*dims[1], sizeof(float)) ;
 
-    unsigned int timer=0;
-    cutilCheckError( cutResetTimer(timer) );
-    cutilCheckError( cutStartTimer(timer) );
-
     image_t im;
     image_from_data(im,(float*)image.data,image.dimensions[0],image.dimensions[1], image.dimensions[2]);
+    cout << im.I[0] << " " << im.I[1] << " " << im.I[2] <<endl;
 
-    /********** Quick shift **********/
+    //[>********* Quick shift *********<]
     quickshift_gpu(im, sigma, tau, map, gaps, E);
 
-    cutilCheckError( cutStopTimer(timer) );
-    float modeTime = cutGetTimerValue(timer);
-
-    /* Consistency check */
+    //[> Consistency check <]
     for(int p = 0; p < im.N1*im.N2; p++)
         if(map[p] == p) assert(gaps[p] == INF);
 
@@ -145,27 +145,32 @@ PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma
     assert(imout.N1 == image.dimensions[0]);
     assert(imout.N2 == image.dimensions[1]);
     assert(imout.K == 3);
-    PyArrayObject * out = (PyArrayObject*) PyArray_FromDimsAndData( 3, dims, PyArray_FLOAT, (char*)imout.I);
+    PyArrayObject * out = (PyArrayObject*) PyArray_SimpleNewFromData( 3, dims, PyArray_FLOAT, imout.I);
+    //PyArrayObject * out = (PyArrayObject*) PyArray_SimpleNew( 3, dims, PyArray_FLOAT);
 
     free(flatmap);
 
-    printf("Time: %fms\n\n\n", modeTime);
-
-    cutilCheckError( cutStopTimer(totaltimer) );
-    float totalTime = cutGetTimerValue(totaltimer);
-    printf("Total time: %fms\n", totalTime);
 
 
     /********** Cleanup **********/
-    free(im.I);
+    //free(im.I);
 
     free(map);
     free(E);
     free(gaps);
     delete dims;	
     return PyArray_Return(out);
+    //return PyArray_Return(&image);
+}
+
+void* extract_pyarray(PyObject* x)
+{
+	return x;
 }
 
 BOOST_PYTHON_MODULE(quickshift_py){
+	converter::registry::insert(
+	    &extract_pyarray, type_id<PyArrayObject>());
     def("quickshift",quickshift_python_wrapper);
+    import_array();
 }

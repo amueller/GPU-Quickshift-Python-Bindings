@@ -64,6 +64,6 @@ quickshift: Image.cpp.o quickshift_cpu.cpp.o main.cpp.o quickshift_gpu.cu.o
 	g++ -fPIC $(MACLD) -o quickshift $^ $(LDFLAGS)
 
 quickshift_python: quickshift_gpu.cu.o
-	g++ quickshift_python.cpp $^ -Wall $(CFLAGS) $(LDFLAGS) $(PYTHONFLAGS) -o quickshift_py.so
+	g++ quickshift_python.cpp $^ -g3 -O0 -Wall $(CFLAGS) $(LDFLAGS) $(PYTHONFLAGS) -o quickshift_py.so
 clean:
 	rm -f quickshift *.o
