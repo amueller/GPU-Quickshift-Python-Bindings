@@ -1,0 +1,30 @@
+=====================================================================
+Really Quick Shift Version 0.2
+Brian Fulkerson
+=====================================================================
+
+This package contains an implementation of quick shift on GPU. To
+compile, it requires CUDA 3.0 and the CUDA SDK. You will have to alter
+the Makefile so that the paths point to the location of your
+installation.
+
+Running make will produce a binary "quickshift" which accepts the
+following options:
+
+--file    Choose the file to use, must be a pnm.
+          (default flowers2.pnm)
+--mode    Valid options are gpu (texture memory version) or cpu
+--outfile Select the output file
+          (default <file>-<mode>.pnm
+--tau     Control the tau parameter to quickshift
+          (default 10)
+--sigma   Control the sigma parameter to quickshift
+          (default 6)
+--device  Select a different cuda capable device
+
+=====================================================================
+Version History
+=====================================================================
+0.1     Initial release
+0.2     Cache the center value in a register (thanks James Fung) for
+        2X speedup.
