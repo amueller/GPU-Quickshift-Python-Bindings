@@ -14,6 +14,21 @@
 using namespace boost::python;
 using namespace std;
 
+void transform_back(unsigned char* dst, image_t im)
+{
+  /********** Copy from matlab style **********/
+  for(int k = 0; k < im.K; k++)
+    for(int col = 0; col < im.N2; col++)
+      for(int row = 0; row < im.N1; row++)
+      {
+        /* Row transpose */
+        unsigned char * pt = dst + im.K*(col + im.N2*(im.N1-1-row));
+        /* scale 0-255 */
+        pt[k] = (unsigned char) (im.I[row + col*im.N1 + k*im.N1*im.N2]/32*255);
+      }
+
+}
+
 void image_from_data(image_t & im, unsigned char* image_data, int N1, int N2, int channels){
     im.N1 = N1;
     im.N2 = N2;
@@ -156,7 +171,10 @@ PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma
     assert(imout.N1 == image.dimensions[0]);
     assert(imout.N2 == image.dimensions[1]);
     assert(imout.K == 3);
-    PyArrayObject * out = (PyArrayObject*) PyArray_SimpleNewFromData( 3, dims, PyArray_FLOAT, imout.I);
+    
+    PyArrayObject * out = (PyArrayObject*) PyArray_SimpleNew( 3, dims, PyArray_UBYTE);
+    transform_back((unsigned char*)out->data,imout);
+
     //PyArrayObject * out = (PyArrayObject*) PyArray_SimpleNew( 3, dims, PyArray_FLOAT);
 
     free(flatmap);
@@ -164,14 +182,13 @@ PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma
 
 
     /********** Cleanup **********/
-    //free(im.I);
+    free(im.I);
 
     free(map);
     free(E);
     free(gaps);
     delete dims;	
     return PyArray_Return(out);
-    //return PyArray_Return(&image);
 }
 
 void* extract_pyarray(PyObject* x)
