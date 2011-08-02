@@ -37,7 +37,8 @@ endif
 ifeq ($(ARCH),a64)
 GPUROOT := /usr/local/cuda
 GPULIB  := $(GPUROOT)/lib64
-GDKROOT := /usr/local/src/NVIDIA_GPU_Computing_SDK
+#GDKROOT := /usr/local/src/NVIDIA_GPU_Computing_SDK
+GDKROOT := /usr/local/src/cuda/
 MACOPTS := 
 MACLD   := 
 CPU := x86_64
@@ -50,7 +51,7 @@ NVCC     = $(GPUROOT)/bin/nvcc
 GENCODE  = -gencode=arch=compute_10,code=\"sm_10,compute_10\"  -gencode=arch=compute_20,code=\"sm_20,compute_20\"
 LDFLAGS += -L$(GPULIB) -L$(GDKROOT)/C/lib -L$(GDKROOT)/C/common/lib/$(PLATFORM) -L$(GDKROOT)/shared/lib
 LDFLAGS += -lcudart -lcutil_$(CPU) -lshrutil_$(CPU)
-PYTHONFLAGS = -lboost_python-mt-py26 -shared
+PYTHONFLAGS = -lboost_python-mt-py26 -shared -I/usr/include/python2.6
 
 all: quickshift
 

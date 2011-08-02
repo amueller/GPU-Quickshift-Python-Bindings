@@ -124,7 +124,6 @@ PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma
 
     //assert(image.nd == 2 || image.nd == 3);
     assert(image.nd == 3);
-    cout << "Input needs to be scaled between 0 and 32!" <<std::endl;
     if (PyArray_TYPE(&image) != PyArray_UBYTE){
        cout << "Only float arrays are supported"  <<std::endl;
        exit(1);
@@ -175,20 +174,26 @@ PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma
     PyArrayObject * out = (PyArrayObject*) PyArray_SimpleNew( 3, dims, PyArray_UBYTE);
     transform_back((unsigned char*)out->data,imout);
 
-    //PyArrayObject * out = (PyArrayObject*) PyArray_SimpleNew( 3, dims, PyArray_FLOAT);
-
-    free(flatmap);
-
-
+    npy_intp* dims_t=new npy_intp[2];
+    dims_t[0]=dims[1];
+    dims_t[1]=dims[0];
+    PyArrayObject * pymap = (PyArrayObject*) PyArray_SimpleNewFromData( 2, dims_t, PyArray_INT, flatmap);
+    // this gives a transposed array!
+    PyObject* pymap_t = PyArray_Transpose(pymap, NULL);
 
     /********** Cleanup **********/
     free(im.I);
-
+    delete dims;	
+    delete dims_t;
+    delete pymap;
     free(map);
     free(E);
     free(gaps);
-    delete dims;	
-    return PyArray_Return(out);
+
+    PyObject* return_list = PyList_New(0);
+    PyList_Append(return_list,(PyObject*) out);
+    PyList_Append(return_list, pymap_t);
+    return return_list;
 }
 
 void* extract_pyarray(PyObject* x)
@@ -196,7 +201,7 @@ void* extract_pyarray(PyObject* x)
 	return x;
 }
 
-BOOST_PYTHON_MODULE(quickshift_py){
+BOOST_PYTHON_MODULE(pyquickshift){
 	converter::registry::insert(
 	    &extract_pyarray, type_id<PyArrayObject>());
     def("quickshift",quickshift_python_wrapper);
