@@ -40,7 +40,7 @@ void image_from_data(image_t & im, unsigned char* image_data, int N1, int N2, in
             for(int row = 0; row < im.N1; row++)
             {
                 unsigned char * pt = image_data + im.K * (col + im.N2 *(im.N1-1-row));
-                im.I[row + col*im.N1 + k*im.N1*im.N2] = 32. * pt[k] / 255.; // Scale 0-32
+                im.I[row + col*im.N1 + k*im.N1*im.N2] = max(0.,32. * pt[k] / 255. + double(rand())/RAND_MAX/10 -0.1); // Scale 0-32
             }
 }
 
@@ -125,7 +125,7 @@ PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma
     //assert(image.nd == 2 || image.nd == 3);
     assert(image.nd == 3);
     if (PyArray_TYPE(&image) != PyArray_UBYTE){
-       cout << "Only float arrays are supported"  <<std::endl;
+       cout << "Only unsigned byte arrays are supported"  <<std::endl;
        exit(1);
     }
     
