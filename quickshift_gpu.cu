@@ -163,7 +163,6 @@ extern "C"
 void quickshift_gpu(image_t im, float sigma, float tau, float * map, float * gaps, float * E)
 {
 #if USE_TEX_I
-  printf("quickshiftGPU: using texture for I\n");
   cudaArray * cu_array_I;
 
   // Allocate array
@@ -193,7 +192,7 @@ void quickshift_gpu(image_t im, float sigma, float tau, float * map, float * gap
 
   float *map_d, *E_d, *gaps_d, *I;
 
-  int verb = 1 ;
+  int verb = 0 ;
 
   float tau2;
   
@@ -248,7 +247,7 @@ void quickshift_gpu(image_t im, float sigma, float tau, float * map, float * gap
 
   cutilCheckError( cutStopTimer(Etimer) );
   float ETime = cutGetTimerValue(Etimer);
-  printf("ComputeE: %fms\n", ETime);
+  /*printf("ComputeE: %fms\n", ETime);*/
 
   unsigned int Ntimer;
   cutilCheckError( cutCreateTimer(&Ntimer) );
@@ -257,7 +256,7 @@ void quickshift_gpu(image_t im, float sigma, float tau, float * map, float * gap
 
   /* Texture map E */
 #if USE_TEX_E
-  printf("quickshiftGPU: using texture for E\n");
+  /*printf("quickshiftGPU: using texture for E\n");*/
   cudaChannelFormatDesc descriptionE = cudaCreateChannelDesc<float>();
 
   cudaArray * cu_array_E;
@@ -292,9 +291,9 @@ void quickshift_gpu(image_t im, float sigma, float tau, float * map, float * gap
 
   cutilCheckError( cutStopTimer(Ntimer) );
   float NTime = cutGetTimerValue(Ntimer);
-  printf("ComputeN: %fms\n", NTime);
-  printf("dimGrid: %d %d\n", dimGrid.x, dimGrid.y);
-  printf("dimBlock: %d %d\n", dimBlock.x, dimBlock.y);
+  /*printf("ComputeN: %fms\n", NTime);*/
+  /*printf("dimGrid: %d %d\n", dimGrid.x, dimGrid.y);*/
+  /*printf("dimBlock: %d %d\n", dimBlock.x, dimBlock.y);*/
 
   cutilSafeCall(cudaFree(I));
   cutilSafeCall(cudaFree(map_d));
