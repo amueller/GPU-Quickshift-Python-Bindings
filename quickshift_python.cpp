@@ -134,7 +134,8 @@ PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma
     dims[1]=image.dimensions[1];
     dims[0]=image.dimensions[0];
 
-    cutilSafeCall(cudaSetDevice(device));
+    if (device!=-1)
+        cutilSafeCall(cudaSetDevice(device));
 
     float *map, *E, *gaps;
     int * flatmap;
@@ -149,13 +150,8 @@ PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma
     gaps         = (float *) calloc(dims[0]*dims[1], sizeof(float)) ;
     E            = (float *) calloc(dims[0]*dims[1], sizeof(float)) ;
 
-    unsigned char* blub = (unsigned char*)image.data;
-    std::cout << int(blub[0]) << " " << int(blub[1]) << " " << int(blub[2]) <<std::endl;
-    std::cout << int(blub[3* (30 + 20*dims[1])]) <<std::endl;
-
     image_t im;
     image_from_data(im,(unsigned char*)image.data,image.dimensions[0],image.dimensions[1], image.dimensions[2]);
-    cout << im.I[0] << " " << im.I[1] << " " << im.I[2] <<endl;
 
     //[>********* Quick shift *********<]
     quickshift_gpu(im, sigma, tau, map, gaps, E);
