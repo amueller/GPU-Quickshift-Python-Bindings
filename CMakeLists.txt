@@ -3,7 +3,7 @@ project (py-quickshift-gpu)
 
 # CPACK options for debian package
 set(CPACK_PACKAGE_NAME pyquickshift)
-set(CPACK_PACKAGE_VERSION 0.2.1)
+set(CPACK_PACKAGE_VERSION 0.2.2)
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE amd64)
 set(CPACK_PACKAGE_CONTACT "amueller@ais.uni-bonn.de")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Fulkersons very fast quick shift with additional python bindings. Please site his paper.")
