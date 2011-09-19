@@ -42,5 +42,5 @@ target_link_libraries(pyquickshift
 execute_process ( COMMAND python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
 install(TARGETS pyquickshift  DESTINATION ${PYTHON_SITE_PACKAGES}/quickshift/)
 install(FILES __init__.py  DESTINATION ${PYTHON_SITE_PACKAGES}/quickshift/)
-install(FILES flowers2.pnm  DESTINATION ${PYTHON_SITE_PACKAGES}/quickshift/)
+install(FILES lena.png  DESTINATION ${PYTHON_SITE_PACKAGES}/quickshift/)
 install(TARGETS quickshift_gpu DESTINATION lib)
