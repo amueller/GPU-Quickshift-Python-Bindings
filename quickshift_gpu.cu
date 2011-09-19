@@ -299,5 +299,9 @@ void quickshift_gpu(image_t im, float sigma, float tau, float * map, float * gap
   cutilSafeCall(cudaFree(map_d));
   cutilSafeCall(cudaFree(gaps_d));
   cutilSafeCall(cudaFree(E_d));
+  cutilSafeCall(cudaUnbindTexture(texI));
+  cutilSafeCall(cudaFreeArray(cu_array_I));
+  cutilSafeCall(cudaUnbindTexture(texE));
+  cutilSafeCall(cudaFreeArray(cu_array_E));
 
 }
