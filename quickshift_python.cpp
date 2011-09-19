@@ -89,7 +89,7 @@ image_t imseg(image_t im, int * flatmap)
     if (flatmap[p] == p)
       roots++;
   }
-  printf("Roots: %d\n", roots);
+  //printf("Roots: %d\n", roots);
 
   int nonzero = 0;
   for (int p = 0; p < im.N1*im.N2; p++)
@@ -134,8 +134,10 @@ PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma
     dims[1]=image.dimensions[1];
     dims[0]=image.dimensions[0];
 
-    if (device!=-1)
+    if (device!=-1){
         cutilSafeCall(cudaSetDevice(device));
+        std::cout << "setting device to" << device << std::endl;
+    }
 
     float *map, *E, *gaps;
     int * flatmap;
