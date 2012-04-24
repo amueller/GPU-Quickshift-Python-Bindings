@@ -2,7 +2,7 @@ import pyquickshift
 
 def quickshift(img, tau, sigma, device=-1):
     image,segments = pyquickshift.quickshift(img, tau, sigma, device)
-    return image, segments[::-1,:]
+    return image, segments
 
 def demo():
     import matplotlib.pyplot as plt
