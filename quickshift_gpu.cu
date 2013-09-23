@@ -10,7 +10,6 @@
 #include <assert.h>
 #include <stdio.h>
 #include "quickshift_common.h"
-#include <cutil_inline.h>
 
 texture<float, 3, cudaReadModeElementType> texI;
 texture<float, 2, cudaReadModeElementType> texE;
@@ -180,10 +179,9 @@ void quickshift_gpu(image_t im, float sigma, float tau, float * map, float * gap
   // height, and we omit the 3rd dimension.
   copyParams.srcPtr = make_cudaPitchedPtr(
   (void*)&im.I[0], ext.width*sizeof(float), ext.width, ext.height);
-  CUDA_SAFE_CALL(cudaMemcpy3D(&copyParams));
+  cudaMemcpy3D(&copyParams);
 
-  CUDA_SAFE_CALL(cudaBindTextureToArray(texI, cu_array_I,
-        descriptionI));
+  cudaBindTextureToArray(texI, cu_array_I, descriptionI);
 
   texI.normalized = false;
   texI.filterMode = cudaFilterModePoint;
@@ -208,13 +206,13 @@ void quickshift_gpu(image_t im, float sigma, float tau, float * map, float * gap
   tau2  = tau*tau;
 
   unsigned int size = im.N1*im.N2 * sizeof(float);
-  cutilSafeCall( cudaMalloc( (void**) &I, size*im.K));
-  cutilSafeCall( cudaMalloc( (void**) &map_d, size));
-  cutilSafeCall( cudaMalloc( (void**) &gaps_d, size));
-  cutilSafeCall( cudaMalloc( (void**) &E_d, size));
+  cudaMalloc( (void**) &I, size*im.K);
+  cudaMalloc( (void**) &map_d, size);
+  cudaMalloc( (void**) &gaps_d, size);
+  cudaMalloc( (void**) &E_d, size);
 
-  cutilSafeCall( cudaMemcpy( I, im.I, size*im.K, cudaMemcpyHostToDevice));
-  cutilSafeCall( cudaMemset( E_d, 0, size));
+  cudaMemcpy( I, im.I, size*im.K, cudaMemcpyHostToDevice);
+  cudaMemset( E_d, 0, size);
 
   R = (int) ceil (3 * sigma) ;
   tR = (int) ceil (tau) ;
@@ -230,29 +228,14 @@ void quickshift_gpu(image_t im, float sigma, float tau, float * map, float * gap
     printf("quickshiftGPU: tR:      %d\n", tR) ;
   }
 
-  unsigned int Etimer;
-  cutilCheckError( cutCreateTimer(&Etimer) );
-  cutilCheckError( cutResetTimer(Etimer) );
-  cutilCheckError( cutStartTimer(Etimer) );
-
   dim3 dimBlock(32,4,1);
   dim3 dimGrid(iDivUp(N2, dimBlock.x), iDivUp(N1, dimBlock.y), 1);
   compute_E_gpu <<<dimGrid,dimBlock>>> (I, N1, N2, K, R, sigma, E_d, 0, 0);
 
-  cutilSafeCall( cudaThreadSynchronize() );
-  // check if kernel execution generated an error
-  cutilCheckMsg("Kernel execution failed");
+  cudaThreadSynchronize();
 
-  cutilSafeCall( cudaMemcpy(E, E_d, size, cudaMemcpyDeviceToHost));
+  cudaMemcpy(E, E_d, size, cudaMemcpyDeviceToHost);
 
-  cutilCheckError( cutStopTimer(Etimer) );
-  float ETime = cutGetTimerValue(Etimer);
-  /*printf("ComputeE: %fms\n", ETime);*/
-
-  unsigned int Ntimer;
-  cutilCheckError( cutCreateTimer(&Ntimer) );
-  cutilCheckError( cutResetTimer(Ntimer) );
-  cutilCheckError( cutStartTimer(Ntimer) );
 
   /* Texture map E */
 #if USE_TEX_E
@@ -262,17 +245,16 @@ void quickshift_gpu(image_t im, float sigma, float tau, float * map, float * gap
   cudaArray * cu_array_E;
   cudaMallocArray(&cu_array_E, &descriptionE, im.N1, im.N2);
 
-  CUDA_SAFE_CALL(cudaMemcpyToArray(cu_array_E, 0, 0, E,
-        sizeof(float)*im.N1*im.N2, cudaMemcpyHostToDevice));
+  cudaMemcpyToArray(cu_array_E, 0, 0, E, sizeof(float)*im.N1*im.N2,
+          cudaMemcpyHostToDevice);
 
   texE.normalized = false;
   texE.filterMode = cudaFilterModePoint;
 
-  CUDA_SAFE_CALL( cudaBindTextureToArray(texE, cu_array_E,
-        descriptionE));
-  cutilCheckMsg("Texture setup failed");
+  cudaBindTextureToArray(texE, cu_array_E,
+        descriptionE);
 
-  cutilSafeCall( cudaThreadSynchronize() );
+  cudaThreadSynchronize();
 #endif
 
   /* -----------------------------------------------------------------
@@ -282,26 +264,19 @@ void quickshift_gpu(image_t im, float sigma, float tau, float * map, float * gap
   find_neighbors_gpu <<<dimGrid,dimBlock>>> (I, N1 ,N2, K, E_d, tau2,
       tR, map_d, gaps_d);
 
-  cutilSafeCall( cudaThreadSynchronize() );
-  // check if kernel execution generated an error
-  cutilCheckMsg("Kernel execution failed");
+  cudaThreadSynchronize();
   
   cudaMemcpy(map, map_d, size, cudaMemcpyDeviceToHost);
   cudaMemcpy(gaps, gaps_d, size, cudaMemcpyDeviceToHost);
 
-  cutilCheckError( cutStopTimer(Ntimer) );
-  float NTime = cutGetTimerValue(Ntimer);
-  /*printf("ComputeN: %fms\n", NTime);*/
-  /*printf("dimGrid: %d %d\n", dimGrid.x, dimGrid.y);*/
-  /*printf("dimBlock: %d %d\n", dimBlock.x, dimBlock.y);*/
 
-  cutilSafeCall(cudaFree(I));
-  cutilSafeCall(cudaFree(map_d));
-  cutilSafeCall(cudaFree(gaps_d));
-  cutilSafeCall(cudaFree(E_d));
-  cutilSafeCall(cudaUnbindTexture(texI));
-  cutilSafeCall(cudaFreeArray(cu_array_I));
-  cutilSafeCall(cudaUnbindTexture(texE));
-  cutilSafeCall(cudaFreeArray(cu_array_E));
+  cudaFree(I);
+  cudaFree(map_d);
+  cudaFree(gaps_d);
+  cudaFree(E_d);
+  cudaUnbindTexture(texI);
+  cudaFreeArray(cu_array_I);
+  cudaUnbindTexture(texE);
+  cudaFreeArray(cu_array_E);
 
 }

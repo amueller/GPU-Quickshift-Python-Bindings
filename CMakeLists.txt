@@ -27,9 +27,6 @@ cuda_add_library(quickshift_gpu SHARED
     quickshift_gpu.cu
     )
 MESSAGE(STATUS "CUDA_SDK: ${CUDA_SDK_ROOT_DIR}")
-target_link_libraries(quickshift_gpu
-    cutil
-)
 
 include_directories( ${PYTHON_INCLUDE_PATH})
 PYTHON_ADD_MODULE(pyquickshift SHARED quickshift_python.cpp)

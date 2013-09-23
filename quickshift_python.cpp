@@ -2,11 +2,12 @@
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/python/overloads.hpp>
 
+#include <cuda_runtime.h>
+
 #include "Image.h"
 #include "Exception.h"
 //#include <fstream>
 #include "quickshift_common.h"
-#include <cutil_inline.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL PyArrayGPUQuickshift
 #include <numpy/arrayobject.h> // in python/lib/site-packages/....
@@ -135,7 +136,7 @@ PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma
     dims[0]=image.dimensions[0];
 
     if (device!=-1){
-        cutilSafeCall(cudaSetDevice(device));
+        cudaSetDevice(device);
         std::cout << "setting device to" << device << std::endl;
     }
 
@@ -144,9 +145,6 @@ PyObject * quickshift_python_wrapper(PyArrayObject image, float tau, float sigma
     image_t imout;
 
     unsigned int totaltimer;
-    cutilCheckError( cutCreateTimer(&totaltimer) );
-    cutilCheckError( cutResetTimer(totaltimer) );
-    cutilCheckError( cutStartTimer(totaltimer) );
 
     map          = (float *) calloc(dims[0]*dims[1], sizeof(float)) ;
     gaps         = (float *) calloc(dims[0]*dims[1], sizeof(float)) ;
